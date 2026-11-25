@@ -50,5 +50,6 @@ Code is developed in Claude Code, committed, and pushed to GitHub. Merging to `m
 
 ## Changelog
 
+- Fixed deploy site checks failing with "curl: Failed writing body" (curl piped into `grep -q` under pipefail).
 - Added Snake game (`site/index.html`), EC2 deploy script, and GitHub Actions deploy workflow.
 - Added `CLAUDE.md` with project rules and workflow.
