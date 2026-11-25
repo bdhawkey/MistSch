@@ -23,5 +23,7 @@ sudo cp -r "$SRC"/. "$ROOT"/
 sudo systemctl enable --now nginx
 sudo systemctl reload nginx
 
-curl -fsS http://localhost/ | grep -q '<title>Snake</title>'
+# Capture first: piping into grep -q under pipefail fails when grep exits early.
+page="$(curl -fsS http://localhost/)"
+[[ "$page" == *'<title>Snake</title>'* ]] || { echo "Site check failed" >&2; exit 1; }
 echo "Deployed to $ROOT"
