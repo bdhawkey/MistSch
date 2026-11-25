@@ -1,0 +1,35 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: deploy-ec2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload and deploy
+        run: |
+          tar -czf - site deploy | ssh -i ~/.ssh/ec2.pem "$EC2_USER@$EC2_HOST" \
+            'rm -rf ~/mistsch && mkdir ~/mistsch && tar -xzf - -C ~/mistsch && bash ~/mistsch/deploy/deploy.sh ~/mistsch/site'
+
+      - name: Verify from the internet
+        run: curl -fsS --retry 3 --retry-delay 2 "http://$EC2_HOST/" | grep -q '<title>Snake</title>'
