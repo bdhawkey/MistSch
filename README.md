@@ -29,8 +29,12 @@ On every push to `main` (or a manual run from the Actions tab), the workflow:
 
 1. Connects to the EC2 instance over SSH using the key stored in GitHub secrets.
 2. Uploads `site/` and `deploy/` as one compressed stream.
-3. Runs `deploy/deploy.sh`, which installs nginx if needed (supports Amazon Linux and Ubuntu), copies the site into the web root, and checks it is served locally.
-4. Fetches the page from the internet to confirm it is reachable.
+3. Runs `deploy/deploy.sh`, which installs nginx if needed (supports Amazon Linux and Ubuntu), copies the site into the web root, sets a `Cache-Control: no-cache` header, validates the nginx config, and checks the site is served locally.
+4. Fetches the page from the internet to confirm it is reachable and sends the no-cache header.
+
+### Caching
+
+nginx sends `Cache-Control: no-cache` (configured in `/etc/nginx/conf.d/mistsch-nocache.conf` on the instance). Browsers revalidate on every load, so new deploys appear on a normal refresh. Unchanged files return a lightweight 304 response, so this costs almost nothing.
 
 ### One-time setup
 
@@ -50,6 +54,7 @@ Code is developed in Claude Code, committed, and pushed to GitHub. Merging to `m
 
 ## Changelog
 
+- Added `Cache-Control: no-cache` header so deploys show without a hard refresh; deploy now validates nginx config and the workflow checks the header.
 - Fixed deploy site checks failing with "curl: Failed writing body" (curl piped into `grep -q` under pipefail).
 - Added Snake game (`site/index.html`), EC2 deploy script, and GitHub Actions deploy workflow.
 - Added `CLAUDE.md` with project rules and workflow.

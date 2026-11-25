@@ -20,6 +20,12 @@ fi
 if [ -d /var/www/html ]; then ROOT=/var/www/html; else ROOT=/usr/share/nginx/html; fi
 
 sudo cp -r "$SRC"/. "$ROOT"/
+
+# Browsers must revalidate on every load so new deploys show without a hard refresh.
+# Unchanged files still return a cheap 304 thanks to ETag/Last-Modified.
+echo 'add_header Cache-Control "no-cache" always;' | sudo tee /etc/nginx/conf.d/mistsch-nocache.conf >/dev/null
+
+sudo nginx -t
 sudo systemctl enable --now nginx
 sudo systemctl reload nginx
 
